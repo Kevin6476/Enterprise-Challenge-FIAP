@@ -779,6 +779,7 @@ HTML_TEMPLATE = """<!doctype html>
     .bar-chart { display: grid; gap: 9px; }
     .bar-row { display: grid; grid-template-columns: minmax(88px, 150px) minmax(0, 1fr) max-content; align-items: center; gap: 10px; font-size: 13px; }
     .bar-row > div:last-child { text-align: right; white-space: nowrap; }
+    .model-grid .bar-row { grid-template-columns: minmax(190px, 260px) minmax(0, 1fr) max-content; }
     .bar-track { height: 13px; border-radius: 999px; background: rgba(255,255,255,0.23); overflow: hidden; }
     .light .bar-track { background: #e5e7eb; }
     .bar-fill { height: 100%; background: var(--cyan); border-radius: 999px; }
@@ -961,6 +962,21 @@ HTML_TEMPLATE = """<!doctype html>
     };
 
     const riskLabel = { low: "Baixo", medium: "Medio", high: "Alto" };
+    const featureLabels = {
+      payer_score_materialidade_v2: "Materialidade do pagador",
+      payer_score_quantidade_v2: "Quantidade do pagador",
+      payer_score_materialidade_evolucao: "Evolucao da materialidade",
+      payer_sacado_indice_liquidez_1m: "Liquidez 1m do pagador",
+      beneficiary_cedente_indice_liquidez_1m: "Liquidez 1m do cedente",
+      beneficiary_sacado_indice_liquidez_1m: "Liquidez do sacado no cedente",
+      beneficiary_media_atraso_dias: "Atraso medio do cedente",
+      payer_media_atraso_dias: "Atraso medio do pagador",
+      due_day_of_week: "Dia da semana do vencimento",
+      boleto_term_days: "Prazo do boleto",
+      vlr_nominal: "Valor nominal do boleto",
+      default_probability: "Probabilidade de inadimplencia",
+      risk_score: "Score de risco"
+    };
 
     function byId(id) { return document.getElementById(id); }
     function shortId(value) { return String(value || "").slice(0, 8); }
@@ -984,6 +1000,16 @@ HTML_TEMPLATE = """<!doctype html>
     }
     function sectorDisplay(value) {
       return sectorLabel(sectorDivision(value));
+    }
+    function featureLabel(value) {
+      const key = String(value || "");
+      if (featureLabels[key]) return featureLabels[key];
+      return key
+        .replace(/^payer_/, "Pagador - ")
+        .replace(/^beneficiary_/, "Cedente - ")
+        .replace(/^boleto_/, "Boleto - ")
+        .replace(/_/g, " ")
+        .replace(/\\b\\w/g, char => char.toUpperCase());
     }
     function rowMatchesSector(row) {
       if (state.sector === "all") return true;
@@ -1342,7 +1368,7 @@ HTML_TEMPLATE = """<!doctype html>
         { label: "300-599", value: 0.32 },
         { label: "600+", value: 0.78 }
       ], "label", "value");
-      barChart("featureChart", data.feature_importance.map(row => ({ feature: row.feature, importance: Number(row.importance || 0) * 100 })), "feature", "importance");
+      barChart("featureChart", data.feature_importance.map(row => ({ feature: featureLabel(row.feature), importance: Number(row.importance || 0) * 100 })), "feature", "importance");
       const topBeneficiary = data.beneficiaries.slice().sort((a, b) => (b.avg_risk_score || 0) - (a.avg_risk_score || 0))[0] || {};
       byId("predictionExample").innerHTML = `<div class="prediction-badge">Classificacao: ${riskLabel[topBeneficiary.risk_category] || "-"}</div><h2>Exemplo de previsao por cedente</h2><p>ID Cedente: ${shortId(topBeneficiary.id_beneficiario)}<br>Score preditivo: ${fmtScore(topBeneficiary.score_display)}<br>Prob. default: ${fmtPct(topBeneficiary.avg_default_probability)}</p><p><strong>Principais fatores que elevaram o risco</strong></p><p>Historico de inadimplencia, atraso medio, baixa liquidez e exposicao concentrada aparecem como sinais relevantes para priorizacao operacional.</p>`;
     }
