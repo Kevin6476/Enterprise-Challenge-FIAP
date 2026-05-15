@@ -1302,7 +1302,7 @@ HTML_TEMPLATE = """<!doctype html>
         { key: "description", label: "Descricao" },
         { key: "level", label: "Nivel" },
         { key: "status", label: "Status" }
-      ], rows.slice(0, 12), {
+      ], rows, {
         idKey: "entity_id",
         onClick: id => { state.selectedBeneficiary = id; setView("cedentes"); }
       });
