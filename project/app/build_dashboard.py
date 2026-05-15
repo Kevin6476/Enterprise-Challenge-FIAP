@@ -747,7 +747,7 @@ HTML_TEMPLATE = """<!doctype html>
     .home-hero h2 { font-size: 28px; font-weight: 400; line-height: 1.25; text-align: center; margin: 0; }
     .primary-action { border: 0; border-radius: 8px; background: var(--dark); color: #fff; font-size: 30px; padding: 14px 48px; cursor: pointer; }
     .kpi-row { display: grid; grid-template-columns: repeat(5, minmax(160px, 1fr)); gap: 30px; margin-bottom: 28px; }
-    .home-kpis { grid-template-columns: repeat(4, minmax(180px, 1fr)); max-width: 1040px; width: 100%; margin-top: 130px; }
+    .home-kpis { grid-template-columns: repeat(4, minmax(240px, 1fr)); max-width: min(1280px, calc(100vw - 64px)); width: 100%; margin-top: 130px; }
     .kpi {
       min-height: 145px;
       border-radius: 8px;
@@ -758,7 +758,7 @@ HTML_TEMPLATE = """<!doctype html>
     }
     .kpi.light { background: var(--gray-card); color: #000; }
     .kpi .label { font-size: 18px; margin-bottom: 10px; }
-    .kpi .value { font-size: clamp(30px, 2.4vw, 48px); font-weight: 750; text-align: center; line-height: 1.05; overflow-wrap: anywhere; }
+    .kpi .value { font-size: clamp(30px, 2.4vw, 48px); font-weight: 750; text-align: center; line-height: 1.05; white-space: nowrap; overflow-wrap: normal; }
     .kpi .note { font-size: 18px; text-align: right; margin-top: 10px; }
     .green { color: var(--green); }
     .red { color: var(--red); }
@@ -825,6 +825,8 @@ HTML_TEMPLATE = """<!doctype html>
       .app-header { grid-template-columns: 1fr; }
       .main-nav { justify-content: flex-start; }
       .kpi-row, .home-kpis, .model-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .home-kpis { max-width: 100%; }
+      .kpi .value { white-space: normal; overflow-wrap: anywhere; }
       .content-grid, .content-grid.risk-detail, .model-grid { grid-template-columns: 1fr; }
       .filters { justify-content: flex-start; margin-bottom: 26px; }
     }
