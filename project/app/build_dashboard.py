@@ -800,6 +800,7 @@ HTML_TEMPLATE = """<!doctype html>
     th { font-weight: 800; font-size: 20px; }
     tr.clickable { cursor: pointer; }
     tr.clickable:hover td { background: rgba(103,213,239,0.12); }
+    tr.selected-row td { background: rgba(103,213,239,0.18); }
     .risk-pill { display: inline-flex; justify-content: center; min-width: 96px; border-radius: 999px; padding: 6px 10px; font-weight: 800; }
     .risk-high { background: #ef3e36; color: #fff; }
     .risk-medium { background: #d9a71a; color: #111; }
@@ -875,7 +876,8 @@ HTML_TEMPLATE = """<!doctype html>
         <div class="panel"><h2>Atraso Medio (dias)</h2><div id="cedenteDelayChart" class="line-chart"></div></div>
         <div class="panel"><h2>Situacao dos boletos</h2><div id="cedenteStatusBars" class="status-bars"></div></div>
       </div>
-      <div class="panel"><div id="cedenteBoletosTable" class="table-wrap"></div></div>
+      <div class="panel"><h2>Cedentes filtrados</h2><div id="cedenteListTable" class="table-wrap"></div></div>
+      <div class="panel"><h2>Boletos do cedente selecionado</h2><div id="cedenteBoletosTable" class="table-wrap"></div></div>
     </section>
 
     <section id="alertas" class="view">
@@ -1147,8 +1149,13 @@ HTML_TEMPLATE = """<!doctype html>
       const head = headers.map(item => `<th>${item.label}</th>`).join("");
       const body = rows.map(row => {
         const cells = headers.map(item => `<td>${item.render ? item.render(row[item.key], row) : clean(row[item.key])}</td>`).join("");
-        const click = options.onClick ? ` class="clickable" data-id="${options.idKey ? row[options.idKey] : ""}"` : "";
-        return `<tr${click}>${cells}</tr>`;
+        const id = options.idKey ? row[options.idKey] : "";
+        const classes = [
+          options.onClick ? "clickable" : "",
+          options.selectedId && String(id) === String(options.selectedId) ? "selected-row" : ""
+        ].filter(Boolean).join(" ");
+        const attrs = `${classes ? ` class="${classes}"` : ""}${options.onClick ? ` data-id="${id}"` : ""}`;
+        return `<tr${attrs}>${cells}</tr>`;
       }).join("");
       byId(target).innerHTML = `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
       if (options.onClick) {
@@ -1234,6 +1241,7 @@ HTML_TEMPLATE = """<!doctype html>
         byId("cedenteProfile").innerHTML = `<div class="empty">Nenhum cedente encontrado para os filtros atuais.</div>`;
         lineChart("cedenteDelayChart", [], "label", "delay");
         byId("cedenteStatusBars").innerHTML = `<div class="empty">Sem dados para os filtros atuais.</div>`;
+        table("cedenteListTable", [], []);
         table("cedenteBoletosTable", [], []);
         return;
       }
@@ -1277,11 +1285,19 @@ HTML_TEMPLATE = """<!doctype html>
         { key: "tipo_baixa", label: "Status", render: v => clean(v).slice(0, 42) }
       ], entityRows.slice(0, 8));
 
-      const list = filteredBeneficiaries().slice(0, 8);
-      if (list.length) {
-        const chooser = document.createElement("div");
-        chooser.className = "panel";
-      }
+      table("cedenteListTable", [
+        { key: "id_beneficiario", label: "Cedente ID", render: v => shortId(v) },
+        { key: "uf", label: "UF", render: v => clean(v) },
+        { key: "cd_cnae_prin", label: "Setor", render: v => sectorDisplay(v) },
+        { key: "total_value", label: "Carteira", render: v => fmtMoney.format(v) },
+        { key: "default_rate", label: "Inadimplencia", render: v => fmtPct(v) },
+        { key: "score_display", label: "Score", render: v => fmtScore(v) },
+        { key: "total_boletos", label: "Boletos", render: v => fmtInt.format(v || 0) }
+      ], filteredBeneficiaries(), {
+        idKey: "id_beneficiario",
+        selectedId: state.selectedBeneficiary,
+        onClick: id => { state.selectedBeneficiary = id; render(); }
+      });
     }
 
     function renderAlertas() {
